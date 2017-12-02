@@ -1,0 +1,398 @@
+Setup Plex Home Media Server on Raspberry Pi 3
+
+
+Backup the included microSD card to preserve the NOOBS installation 
+	In your Raspberry Pi work folder (M:\Raspberry Pi 3) create a folder to backup contents of microSD
+	M:\Raspberry Pi 3\Pi #1\Backup of Micro SD out of the box 11-30-2017
+	Copy all contents from microSD to this folder
+
+
+
+Build the Raspberry Pi
+	Resources:
+		https://youtu.be/gbJB3387xUw
+		https://www.canakit.com/quick-start/pi
+		
+	Steps:
+		Remove all items from boxes - careful to be mindful of static electricity
+		Add heat sinks to Pi board
+		Insert board into case and snap on case top
+		Insert HDMI cable
+		Insert usb mouse and keyboard 
+		Insert microSD card and plug in power to boot the Raspberry Pi
+		
+		
+
+Install and Update the OS
+	Resources:
+		https://www.canakit.com/quick-start/pi
+		https://youtu.be/gbJB3387xUw
+		
+	Steps:
+		When Pi boots for first time you enter the NOOBS menu
+			Select Raspbian 
+			Click install
+			NOOBS will handle the install - takes a few minutes
+			Click OK when install is done and system reboots
+		After Pi is back online the OS should be updated - this will take some time
+			sudo apt-get update
+			sudo apt-get upgrade
+		When upgrade is done reboot the Pi		
+			sudo reboot
+			
+			
+			
+Change the password for the user pi
+	Resources:
+		https://www.raspberrypi.org/documentation/linux/usage/users.md
+	Steps:
+		Click the Raspbian icon to open the applications menu
+		Navigate to	
+			Preferences -> Raspberry Pi Configuration
+		Select the System tab
+		Click Change Password button
+			old password should be default password - raspberry
+			enter new password twice (make sure to remember this password!)
+			Click OK
+		Click OK
+		
+		Alternate method via terminal
+			login to terminal as pi
+			passwd
+			enter old password - default is raspberry
+			enter new password twice
+			
+			
+			
+Enable and Configure remote interfaces
+	Resources:
+		https://youtu.be/LlXx9yVfQ0k
+		https://www.raspberrypi.org/documentation/configuration/config-txt/video.md
+	Steps:
+		Click the Raspbian icon to open the applications menu
+		Navigate to	
+			Preferences -> Raspberry Pi Configuration
+		Select the Interfaces tab
+			Click Enable on:
+				SSH
+				VNC
+			Click OK
+			
+		Edit /boot/config.txt to set the correct resolution for VNC
+			sudo nano /boot/config.txt
+		Uncomment these lines
+			hdmi_group=2
+			hdmi_mode=82 (hdmi_mode can change based on resolution you want to run...see documentation link for possible settings)
+		Add this line	
+			hdmi_ignore_edid=0xa5000080
+		Save and close the file
+			Ctrl+X -> Y -> Enter
+			
+		Confirm your entries as follows: 
+			#hdmi_safe=1
+				# uncomment if hdmi display is not detected and composite is being output
+				#hdmi_force_hotplug=1
+				hdmi_group=2
+				hdmi_mode=82
+				hdmi_ignore_edid=0xa5000080
+				#hdmi_drive=2
+				#config_hdmi_boost=4
+				#hdmi_force_hotplug=1
+			pi@raspberrypi:~ $
+
+		Shutdown the Raspberry Pi		
+			sudo poweroff
+			
+			
+			
+Backup the microSD card with the clean install and updated OS
+	Resources:
+		https://raspberrypihq.com/how-to-backup-your-raspberry-pi/
+		
+	Steps:
+		
+			
+			
+			
+Connect to Raspberry Pi remotely
+	Resources:
+	https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+	https://www.realvnc.com/en/connect/download/viewer/
+	Steps:
+		Launch putty
+		Enter your Raspberry Pi's IP Address
+		Click Open
+		Login as user pi
+		
+		Launch VNC
+		Enter your Raspberry Pi's IP Address
+		login as user pi
+		
+			
+			
+Check for and install HTTPS transport package
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:
+		sudo apt-get install apt-transport-https
+		
+		
+		
+Add dev2day repository
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:
+		Provide crypt O key to dev2day website
+			wget -O - https://dev2day.de/pms/dev2day-pms.gpg.key | sudo apt-key add -
+		Add dev2day's repository to the package source list
+			echo "deb https://dev2day.de/pms/ jessie main" | sudo tee /etc/apt/sources.list.d/pms.list
+		Update the package
+			sudo apt-get update
+			
+		
+		
+Download and Install Plex	
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:		
+		sudo apt-get install -t jessie plexmediaserver
+		
+		
+		
+Permissions and Restart
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:	
+		sudo nano /etc/default/plexmediaserver.prev
+			Change
+				PLEX_MEDIA_SERVER_USER=plex
+			to	
+				PLEX_MEDIA_SERVER_USER=pi
+		Save and close the file
+			Ctrl+X -> Y -> Enter
+		Check your changes
+			pi@raspberrypi:~ $ grep PLEX_MEDIA_SERVER_USER /etc/default/plexmediaserver.prev
+				PLEX_MEDIA_SERVER_USER=pi
+			pi@raspberrypi:~ $
+			
+		sudo service plexmediaserver restart
+		
+		
+		
+Static IP Address
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:
+		Find your current IP Address and write it down
+			hostname -I
+		sudo nano /boot/cmdline.txt
+			scroll to bottom of file and add your ip address as follows
+				ip=10.0.1.182
+		Close and save file
+			Ctrl+X -> Y -> Enter
+		Check your changes
+			pi@raspberrypi:~ $ grep ip /boot/cmdline.txt
+				ip=10.0.1.182
+			pi@raspberrypi:~ $
+		Reboot the Raspberry Pi		
+			sudo reboot
+			
+			
+			
+Attach and setup storage drive
+	Resources:
+		https://youtu.be/Q0W6ggl5yjY
+		
+	Steps:
+		Login via putty to your Raspberry Pi as the pi user	
+		Find the UUID of the USB drive you have plugged in	
+			You can find the drive location by running df -h
+			If this is the first drive it will be located at
+				/dev/sda1
+			Each subsequent drive will be at
+				/dev/sda2
+				/dev/sda3
+				etc
+		Note the UUID from here
+			pi@raspberrypi:~ $ sudo blkid /dev/sda1
+				/dev/sda1: LABEL="My Passport" UUID="E64C57FB4C57C4C9" TYPE="ntfs" PARTLABEL="My Passport" PARTUUID="bb7fcf44-00a7-47d0-8a5a-256cac11e3e7"
+			pi@raspberrypi:~ $
+		Note the TYPE 
+			If NTFS you will need to install ntfs-3g
+			To install	
+				pi@raspberrypi:~ $ sudo apt-get install ntfs-3g
+					Reading package lists... Done
+					Building dependency tree
+					Reading state information... Done
+					ntfs-3g is already the newest version.
+					0 upgraded, 0 newly installed, 0 to remove and 4 not upgraded.
+				pi@raspberrypi:~ $
+			Newest version already installed
+		
+		Create clean directory to mount the usb drive to
+			sudo mkdir /media/usb1
+
+		Find the gid and the uid
+			For the gid	
+				pi@raspberrypi:~ $ id -g pi
+					1000
+				pi@raspberrypi:~ $
+			For the uid	
+				pi@raspberrypi:~ $ id -u pi
+					1000
+				pi@raspberrypi:~ $
+			
+		Edit the fstab file to setup automount on boot up 
+			sudo nano /etc/fstab
+			
+		Scroll to bottom of file and add the following line
+			UUID=E64C57FB4C57C4C9 /media/usb1 auto nofail,uid=1000,gid=1000,noatime 0 0
+		Close and save file
+			Ctrl+X -> Y -> Enter
+		Check your changes	
+			pi@raspberrypi:~ $ grep UUID /etc/fstab
+				UUID=E64C57FB4C57C4C9 /media/usb1 auto nofail,uid=1000,gid=1000,noatime 0 0
+			pi@raspberrypi:~ $
+			
+		Unmount the existing mount for the usb drive	
+			sudo umount /dev/dsa1
+			
+		Mount the usb drive to the new location	
+			sudo mount -a
+			
+		Check to make sure you can see your files/folders on the usb drive		
+			pi@raspberrypi:~ $ ls -lthr /media/usb1/
+				total 12K
+				drwxrwxrwx 1 pi pi 4.0K Mar  2  2017 Movies
+				drwxrwxrwx 1 pi pi 4.0K Nov 30 17:46 System Volume Information
+				drwxrwxrwx 1 pi pi 4.0K Nov 30 17:46 $RECYCLE.BIN
+				drwxrwxrwx 1 pi pi    0 Nov 30 22:50 TV Shows
+			pi@raspberrypi:~ $ 
+			
+		Reboot the Raspberry Pi to make sure the drive will automount after reboot
+			sudo reboot
+			
+		Once back online check if files are still visible
+			pi@raspberrypi:~ $ ls -lthr /media/usb1/
+				total 12K
+				drwxrwxrwx 1 pi pi 4.0K Mar  2  2017 Movies
+				drwxrwxrwx 1 pi pi 4.0K Nov 30 17:46 System Volume Information
+				drwxrwxrwx 1 pi pi 4.0K Nov 30 17:46 $RECYCLE.BIN
+				drwxrwxrwx 1 pi pi    0 Nov 30 22:50 TV Shows
+			pi@raspberrypi:~ $
+			
+			
+			
+Add media to Plex server
+	Resources:
+		https://thepi.io/how-to-set-up-a-raspberry-pi-plex-server/
+		
+	Steps:
+		On local machine
+		Open browser and browse to 
+			<ip address of pi>:32400/web
+			10.0.1.182:32400/web
+		Add media files normally
+		
+		
+		
+Share media folders on USB storage device to local machine
+	Resources:
+		https://raspberrypihq.com/how-to-share-a-folder-with-a-windows-computer-from-a-raspberry-pi/
+	Steps:
+		Install Samba
+			sudo apt-get install samba samba-common-bin
+		Configure 
+			sudo nano /etc/samba/smb.conf
+			Edit the file
+				workgroup=WORKGROUP (or the name of the workgroup you are using on your Win PC)
+				wins support=yes
+			Close and save file
+				Ctrl+X -> Y -> Enter
+		Check your updates
+			pi@raspberrypi:~ $ grep workgroup /etc/samba/smb.conf
+				# Change this to the workgroup/NT-domain name your Samba server will part of
+				workgroup = WORKGROUP
+				pi@raspberrypi:~ $ grep wins /etc/samba/smb.conf
+				wins support = yes
+				;   wins server = w.x.y.z
+			pi@raspberrypi:~ $
+			
+		Define share location	
+			sudo nano /etc/samba/smb.conf
+			Scroll to bottom of file and add the following
+				[PiShare]
+				comment=Raspberry Pi Share
+				path=/media/usb1
+				browseable=Yes
+				writeable=Yes
+				only guest=no
+				create mask=0777
+				directory mask=0777
+				public=no
+			Close and save file
+				Ctrl+X -> Y -> Enter
+			Check your updates
+				pi@raspberrypi:~ $ grep -A 9 PiShare /etc/samba/smb.conf
+					[PiShare]
+					comment=Raspberry Pi Share
+					path=/media/usb1
+					browseable=Yes
+					writeable=Yes
+					only guest=no
+					create mask=0777
+					directory mask=0777
+					public=no
+				pi@raspberrypi:~ $
+				
+		Inform Samba that pi is a netowrk user	
+			sudo smbpasswd -a pi
+
+		On Win PC 
+			Open Windows Explorer
+			Map Network Drive
+			Select drive letter
+			Folder ->  \\RASPBERRYPI\PiShare
+			Check Reconnect at sign-in
+			Finish
+			To access the share you will need to login as the pi user
+			
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
